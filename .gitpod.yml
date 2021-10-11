@@ -4,6 +4,15 @@ tasks:
       ./configure --disable-shared --enable-debug --enable-maintainer-mode --with-openssl
       make
 
+github:
+  prebuilds:
+    master: true
+    branches: true
+    pullRequests: true
+    pullRequestsFromForks: true
+    addCheck: true
+    addComment: false
+    addBadge: true
 
 
 image:
