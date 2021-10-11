@@ -1,4 +1,5 @@
 tasks:
+  - name: Setup curl
   - init: |
       autoreconf -fi
       ./configure --disable-shared --enable-debug --enable-maintainer-mode --with-openssl
