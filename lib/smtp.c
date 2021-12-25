@@ -222,7 +222,7 @@ static bool smtp_endofresp(struct Curl_easy *data, struct connectdata *conn,
 
   /* Do we have a command response? This should be the response code followed
      by a space and optionally some text as per RFC-5321 and as outlined in
-     Section 4. Examples of RFC-4954 but some e-mail servers ignore this and
+     Section 4. Examples of RFC-4954 but some email servers ignore this and
      only send the response code instead as per Section 4.2. */
   if(line[3] == ' ' || len == 5) {
     char tmpline[6];
@@ -490,7 +490,7 @@ static CURLcode smtp_perform_authentication(struct Curl_easy *data)
   saslprogress progress;
 
   /* Check we have enough data to authenticate with, and the
-     server supports authentiation, and end the connect phase if not */
+     server supports authentication, and end the connect phase if not */
   if(!smtpc->auth_supported ||
      !Curl_sasl_can_authenticate(&smtpc->sasl, conn)) {
     state(data, SMTP_STOP);
@@ -527,7 +527,7 @@ static CURLcode smtp_perform_command(struct Curl_easy *data)
 
   if(smtp->rcpt) {
     /* We notify the server we are sending UTF-8 data if a) it supports the
-       SMTPUTF8 extension and b) The mailbox contains UTF-8 charaacters, in
+       SMTPUTF8 extension and b) The mailbox contains UTF-8 characters, in
        either the local address or host name parts. This is regardless of
        whether the host name is encoded using IDN ACE */
     bool utf8 = FALSE;
@@ -600,7 +600,7 @@ static CURLcode smtp_perform_mail(struct Curl_easy *data)
   struct connectdata *conn = data->conn;
 
   /* We notify the server we are sending UTF-8 data if a) it supports the
-     SMTPUTF8 extension and b) The mailbox contains UTF-8 charaacters, in
+     SMTPUTF8 extension and b) The mailbox contains UTF-8 characters, in
      either the local address or host name parts. This is regardless of
      whether the host name is encoded using IDN ACE */
   bool utf8 = FALSE;

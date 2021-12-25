@@ -354,9 +354,7 @@ static void up_free(struct Curl_easy *data)
  * This is the internal function curl_easy_cleanup() calls. This should
  * cleanup and free all resources associated with this sessionhandle.
  *
- * NOTE: if we ever add something that attempts to write to a socket or
- * similar here, we must ignore SIGPIPE first. It is currently only done
- * when curl_easy_perform() is invoked.
+ * We ignore SIGPIPE when this is called from curl_easy_cleanup.
  */
 
 CURLcode Curl_close(struct Curl_easy **datap)
@@ -542,8 +540,10 @@ CURLcode Curl_init_userdefined(struct Curl_easy *data)
    * libcurl 7.10 introduced SSL verification *by default*! This needs to be
    * switched off unless wanted.
    */
+#ifndef CURL_DISABLE_DOH
   set->doh_verifyhost = TRUE;
   set->doh_verifypeer = TRUE;
+#endif
   set->ssl.primary.verifypeer = TRUE;
   set->ssl.primary.verifyhost = TRUE;
 #ifdef USE_TLS_SRP
@@ -1300,13 +1300,12 @@ ConnectionExists(struct Curl_easy *data,
             if(check->proxy_ssl[FIRSTSOCKET].state != ssl_connection_complete)
               continue;
           }
-          else {
-            if(!Curl_ssl_config_matches(&needle->ssl_config,
-                                        &check->ssl_config))
-              continue;
-            if(check->ssl[FIRSTSOCKET].state != ssl_connection_complete)
-              continue;
-          }
+
+          if(!Curl_ssl_config_matches(&needle->ssl_config,
+                                      &check->ssl_config))
+            continue;
+          if(check->ssl[FIRSTSOCKET].state != ssl_connection_complete)
+            continue;
         }
       }
 #endif
@@ -1950,7 +1949,7 @@ static CURLcode parseurlandfillconn(struct Curl_easy *data,
     return CURLE_OUT_OF_MEMORY;
 
   if(data->set.str[STRING_DEFAULT_PROTOCOL] &&
-     !Curl_is_absolute_url(data->state.url, NULL, MAX_SCHEME_LEN)) {
+     !Curl_is_absolute_url(data->state.url, NULL, 0)) {
     char *url = aprintf("%s://%s", data->set.str[STRING_DEFAULT_PROTOCOL],
                         data->state.url);
     if(!url)
@@ -2397,6 +2396,11 @@ static CURLcode parse_proxy(struct Curl_easy *data,
   CURLcode result = CURLE_OK;
   char *scheme = NULL;
 
+  if(!uhp) {
+    result = CURLE_OUT_OF_MEMORY;
+    goto error;
+  }
+
   /* When parsing the proxy, allowing non-supported schemes since we have
      these made up ones for proxies. Guess scheme for URLs without it. */
   uc = curl_url_set(uhp, CURLUPART_URL, proxy,
@@ -2780,7 +2784,7 @@ CURLcode Curl_parse_login_details(const char *login, const size_t len,
   size_t plen;
   size_t olen;
 
-  /* the input length check is because this is called directcly from setopt
+  /* the input length check is because this is called directly from setopt
      and isn't going through the regular string length check */
   size_t llen = strlen(login);
   if(llen > CURL_MAX_INPUT_LENGTH)
@@ -4110,7 +4114,7 @@ CURLcode Curl_connect(struct Curl_easy *data,
   /* init the single-transfer specific data */
   Curl_free_request_state(data);
   memset(&data->req, 0, sizeof(struct SingleRequest));
-  data->req.maxdownload = -1;
+  data->req.size = data->req.maxdownload = -1;
 
   /* call the stuff that needs to be called */
   result = create_conn(data, &conn, asyncp);
